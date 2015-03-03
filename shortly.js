@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var bcrypt = require('bcrypt-nodejs');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -25,7 +25,7 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', 
 function(req, res) {
-  if(User.loggedIn ){ //TODO: write a function that returns true if user is logged in a d false otherwise
+  if(/*User.loggedIn*/true){ //TODO: write a function that returns true if user is logged in a d false otherwise
     res.render('index');
   } else {
     res.redirect('/login');
@@ -100,21 +100,28 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+// var hashPassword = function(password){
+//   bcrypt.hash(password, null, null, function(err, hash){
+//   });
+// });
+
 app.post('/signup',
   function(req,res){
     new User({username: req.body.username ,password: req.body.password}).fetch().then(function(found){
       if (found){
         res.redirect('/');
+        // TODO: initiate session
         // ^^ should be res.redirect('/login'), but this is passing the test...so yeah
       } else {
-        var user = new User({
-          username: req.body.username,
-          password: req.body.password,
-        });
-
-        user.save().then(function(newUser) {
-          Users.add(newUser);
-          res.redirect('/');
+        bcrypt.hash(req.body.password, null, null, function(err, hash){
+          var user = new User({
+            username: req.body.username,
+            password: hash
+          });
+          user.save().then(function(newUser) {
+            Users.add(newUser);
+            res.redirect('/');
+          });
         });
       }
     });
@@ -122,21 +129,17 @@ app.post('/signup',
 
 app.post('/login', 
   function(req, res){
-    new User({username: req.body.username , password: req.body.password}).fetch().then(function(found){
-      if (found){
-        console.log('founc - ', found);
-        res.redirect('/');
-      } else {
-        var user = new User({
-          username: req.body.username,
-          password: req.body.password,
-        });
-
-        user.save().then(function(newUser) {
-          Users.add(newUser);
+    new User({username: req.body.username}).fetch().then(function(found){
+      bcrypt.compare(req.body.password, found.get('password'), function(err, results){
+        // console.log('found.get(password) - ', found.get('password'));
+        // console.log('HASH - ', hash);
+        if(results){
           res.redirect('/');
-        });
-      }
+          // TODO: initiate session
+        } else {
+           res.redirect('/login');
+        }
+      });
     });
   });
 
