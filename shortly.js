@@ -100,7 +100,7 @@ app.post('/signup',
   function(req,res){
     new User({username: req.body.username ,password: req.body.password}).fetch().then(function(found){
       if (found){
-        res.redirect('/login');
+        res.redirect('/');
       } else {
         var user = new User({
           username: req.body.username,
@@ -109,7 +109,7 @@ app.post('/signup',
 
         user.save().then(function(newUser) {
           Users.add(newUser);
-          res.send(200, newUser);
+          res.redirect('/');
         });
       }
     });
