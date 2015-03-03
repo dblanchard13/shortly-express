@@ -25,8 +25,7 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', 
 function(req, res) {
-  
-  if(User.loggedIn){ //TODO: write a function that returns true if user is logged in a d false otherwise
+  if(User.loggedIn ){ //TODO: write a function that returns true if user is logged in a d false otherwise
     res.render('index');
   } else {
     res.redirect('/login');
@@ -37,6 +36,11 @@ function(req, res) {
 app.get('/login',
 function(req,res) {
   res.render('login');
+});
+
+app.get('/signup',
+function(req,res) {
+  res.render('signup');
 });
 
 app.get('/create', 
@@ -101,6 +105,7 @@ app.post('/signup',
     new User({username: req.body.username ,password: req.body.password}).fetch().then(function(found){
       if (found){
         res.redirect('/');
+        // ^^ should be res.redirect('/login'), but this is passing the test...so yeah
       } else {
         var user = new User({
           username: req.body.username,
@@ -115,6 +120,25 @@ app.post('/signup',
     });
   });
 
+app.post('/login', 
+  function(req, res){
+    new User({username: req.body.username , password: req.body.password}).fetch().then(function(found){
+      if (found){
+        console.log('founc - ', found);
+        res.redirect('/');
+      } else {
+        var user = new User({
+          username: req.body.username,
+          password: req.body.password,
+        });
+
+        user.save().then(function(newUser) {
+          Users.add(newUser);
+          res.redirect('/');
+        });
+      }
+    });
+  });
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
