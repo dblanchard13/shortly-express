@@ -25,19 +25,38 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  
+  if(User.loggedIn){ //TODO: write a function that returns true if user is logged in a d false otherwise
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
+  
+});
+
+app.get('/login',
+function(req,res) {
+  res.render('login');
 });
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+if(User.loggedIn){ //TODO: write a function that returns true if user is logged in a d false otherwise
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.get('/links', 
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
-  });
+  if(User.loggedIn){
+    Links.reset().fetch().then(function(links) {
+      res.send(200, links.models);
+    });    
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.post('/links', 
@@ -77,7 +96,24 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.post('/signup',
+  function(req,res){
+    new User({username: req.body.username ,password: req.body.password}).fetch().then(function(found){
+      if (found){
+        res.redirect('/login');
+      } else {
+        var user = new User({
+          username: req.body.username,
+          password: req.body.password,
+        });
 
+        user.save().then(function(newUser) {
+          Users.add(newUser);
+          res.send(200, newUser);
+        });
+      }
+    });
+  });
 
 
 /************************************************************/
