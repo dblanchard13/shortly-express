@@ -25,7 +25,7 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', 
 function(req, res) {
-  if(/*User.loggedIn*/true){ //TODO: write a function that returns true if user is logged in a d false otherwise
+  if(User.loggedIn){ //TODO: write a function that returns true if user is logged in a d false otherwise
     res.render('index');
   } else {
     res.redirect('/login');
@@ -130,16 +130,20 @@ app.post('/signup',
 app.post('/login', 
   function(req, res){
     new User({username: req.body.username}).fetch().then(function(found){
-      bcrypt.compare(req.body.password, found.get('password'), function(err, results){
-        // console.log('found.get(password) - ', found.get('password'));
-        // console.log('HASH - ', hash);
-        if(results){
-          res.redirect('/');
-          // TODO: initiate session
-        } else {
-           res.redirect('/login');
+      if(found){
+        bcrypt.compare(req.body.password, found.get('password'), function(err, results){
+          // console.log('found.get(password) - ', found.get('password'));
+          // console.log('HASH - ', hash);
+          if(results){
+            res.redirect('/');
+            // TODO: initiate session
+          } else {
+             res.redirect('/login');
+            } 
+        }); 
+      } else {
+         res.redirect('/login');
         }
-      });
     });
   });
 
