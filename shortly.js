@@ -22,10 +22,22 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+var session = require('express-session');
+app.use(session({ secret: 'secret', resave: false, saveUninitialized: true, cookie: {} }));
+
+// app.use(function(req, res, next){
+//   req.session.user_id = '';
+//   res.end();
+// });
+
+var isUserLoggedIn = function(req){
+  console.log('req.session - ', req.session)
+  return !!req.session.user;
+};
 
 app.get('/', 
 function(req, res) {
-  if(User.loggedIn){ //TODO: write a function that returns true if user is logged in a d false otherwise
+  if(isUserLoggedIn(req)){ //TODO: write a function that returns true if user is logged in a d false otherwise
     res.render('index');
   } else {
     res.redirect('/login');
@@ -45,7 +57,7 @@ function(req,res) {
 
 app.get('/create', 
 function(req, res) {
-if(User.loggedIn){ //TODO: write a function that returns true if user is logged in a d false otherwise
+if(isUserLoggedIn(req)){ //TODO: write a function that returns true if user is logged in a d false otherwise
     res.render('index');
   } else {
     res.redirect('/login');
@@ -54,7 +66,7 @@ if(User.loggedIn){ //TODO: write a function that returns true if user is logged 
 
 app.get('/links', 
 function(req, res) {
-  if(User.loggedIn){
+  if(isUserLoggedIn(req)){
     Links.reset().fetch().then(function(links) {
       res.send(200, links.models);
     });    
@@ -109,7 +121,14 @@ app.post('/signup',
   function(req,res){
     new User({username: req.body.username ,password: req.body.password}).fetch().then(function(found){
       if (found){
-        res.redirect('/');
+        (function(req,res){
+          return req.session.regenerate(function(err){
+          console.log('found1 - ',found)
+
+          req.session.user = found;
+          res.redirect('/');
+          });
+        }());
         // TODO: initiate session
         // ^^ should be res.redirect('/login'), but this is passing the test...so yeah
       } else {
@@ -120,7 +139,15 @@ app.post('/signup',
           });
           user.save().then(function(newUser) {
             Users.add(newUser);
-            res.redirect('/');
+            (function(req,res){
+            return req.session.regenerate(function(err){
+              console.log('req.session before - ',req.session)
+
+              req.session.user = newUser;
+               console.log('req.session after - ',req.session)
+             res.redirect('/');
+            });
+            }());
           });
         });
       }
@@ -132,11 +159,14 @@ app.post('/login',
     new User({username: req.body.username}).fetch().then(function(found){
       if(found){
         bcrypt.compare(req.body.password, found.get('password'), function(err, results){
-          // console.log('found.get(password) - ', found.get('password'));
-          // console.log('HASH - ', hash);
           if(results){
-            res.redirect('/');
-            // TODO: initiate session
+            (function(req,res){
+            return req.session.regenerate(function(err){
+              console.log('found3 - ',found)
+              req.session.user = found;
+              res.redirect('/');
+            });
+            }());
           } else {
              res.redirect('/login');
             } 

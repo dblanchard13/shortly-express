@@ -197,13 +197,25 @@ describe('', function() {
         });
       });
 
-      xit('Returns all of the links to display on the links page', function(done) {
-        var options = {
+      it('Returns all of the links to display on the links page', function(done) {
+        var options1 = {
+          'method': 'POST',
+          'uri': 'http://127.0.0.1:4568/signup',
+          'json': {
+            'username': 'anything',
+            'password': 'anything'
+          }
+        };
+
+        requestWithSession(options1, function(error, res, body) {
+          // done();
+        });
+        var options2 = {
           'method': 'GET',
           'uri': 'http://127.0.0.1:4568/links'
         };
 
-        requestWithSession(options, function(error, res, body) {
+        requestWithSession(options2, function(error, res, body) {
           expect(body).to.include('"title":"Funny animal pictures, funny animals, funniest dogs"');
           expect(body).to.include('"code":"' + link.get('code') + '"');
           done();
@@ -230,7 +242,7 @@ describe('', function() {
       });
     });
 
-    xit('Redirects to login page if a user tries to see all of the links and is not signed in', function(done) {
+    it('Redirects to login page if a user tries to see all of the links and is not signed in', function(done) {
       request('http://127.0.0.1:4568/links', function(error, res, body) {
         expect(res.req.path).to.equal('/login');
         done();
